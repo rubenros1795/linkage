@@ -1,0 +1,4 @@
+model_path: "/home/rb/Documents/Data/models/top2vec/t2v-bound-1945-1967.model"
+data_path: "/home/rb/Documents/Data/models/top2vec/t2v-bound-1945-1967-data.tsv"
+dist_path_raw: "/home/rb/Documents/Data/models/top2vec/t2v-bound-1945-1967-docdist-raw.tsv"
+keys_path: "/home/rb/Documents/Data/models/top2vec/t2v-bound-1945-1967-keys.tsv"
