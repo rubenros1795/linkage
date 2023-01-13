@@ -5,7 +5,7 @@ from matplotlib import cm, patches
 
 
 
-def add_cabinet_periods(ax,fn='/home/rb/Documents/GitHub/linkage/helpers/cabinets.csv',min_time=1946,max_time=1967,color='salmon',alpha=.5,linestyle='--',text=True):
+def add_cabinet_periods(ax,fn='helpers/cabinets.csv',min_time=1946,max_time=1967,color='salmon',alpha=.5,linestyle='--',text=True):
   cbp = pd.read_csv(fn,sep='\t')
   cbp['startdate'] = pd.to_datetime(cbp.startdate,format='%d-%M-%Y')
   cbp['enddate'] = pd.to_datetime(cbp.enddate,format='%d-%M-%Y')
