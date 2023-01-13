@@ -1,32 +1,32 @@
-speakername	startdate	enddate	cabinet
-De Geer|de Vries Czn.	09-09-1918	18-07-1922	Ruijs-I
-De Geer|Colijn	18-07-1922	04-08-1925	Ruijs-II
-Colijn*	04-08-1925	08-03-1926	Colijn-I
-De Geer*	08-03-1926	10-08-1929	DeGeer-I
-De Geer	10-08-1929	26-05-1933	Ruijs-III
-Oud	26-05-1933	31-07-1935	Colijn-II
-Oud	31-07-1935	24-06-1937	Colijn-III
-de Wilde	24-06-1937	25-07-1939	Colijn-IV
-Bodenhausen	25-07-1939	10-08-1939	Colijn-V
-De Geer*	10-08-1939	03-09-1940	DeGeer
-Lieftinck	25-06-1945	03-07-1946	SchermerhornDrees
-Lieftinck	03-07-1946	07-08-1948	Beel-I
-Lieftinck	07-08-1948	15-03-1951	Drees-VanSchaik
-Lieftinck	15-03-1951	02-09-1952	Drees-I
-van de Kieft	02-09-1952	13-10-1956	Drees-II
-Hofstra	13-10-1956	22-12-1958	Drees-III
-Zijlstra	22-12-1958	19-05-1959	Beel-II
-Zijlstra	19-05-1959	24-07-1963	DeQuay
-Witteveen	24-07-1963	14-04-1965	Marijnen
-Vondeling	14-04-1965	14-10-1966	Cals
-Zijlstra	14-10-1966	15-02-1967	Zijlstra
-Witteveen	15-02-1967	06-07-1971	De Jong
-Nelissen	06-07-1971	19-07-1972	Biesheuvel
-Nelissen	19-07-1972	11-05-1973	Biesheuvel II
-Duisenberg	11-05-1973	19-12-1977	Den Uyl
-Andriessen et al.	19-12-1977	11-09-1981	Van Agt
-Van der Stee	11-09-1981	29-05-1982	Van Agt II
-Van der Stee	29-05-1982	4-11-1982	Van Agt III
-Ruding	4-11-1982	14-7-1986	Lubbers
-Ruding	14-7-1986	7-11-1989	Lubbers II
-Kok	7-11-1989	22-8-1994	Lubbers III
+speakername	startdate	enddate	cabinet	num_departments	num_ministers
+De Geer|de Vries Czn.	09-09-1918	18-07-1922	Ruijs-I		
+De Geer|Colijn	18-07-1922	04-08-1925	Ruijs-II		
+Colijn*	04-08-1925	08-03-1926	Colijn-I		
+De Geer*	08-03-1926	10-08-1929	DeGeer-I		
+De Geer	10-08-1929	26-05-1933	Ruijs-III		
+Oud	26-05-1933	31-07-1935	Colijn-II		
+Oud	31-07-1935	24-06-1937	Colijn-III		
+de Wilde	24-06-1937	25-07-1939	Colijn-IV		
+Bodenhausen	25-07-1939	10-08-1939	Colijn-V		
+De Geer*	10-08-1939	03-09-1940	DeGeer		
+Lieftinck	25-06-1945	03-07-1946	SchermerhornDrees	14	15
+Lieftinck	03-07-1946	07-08-1948	Beel-I	17	19
+Lieftinck	07-08-1948	15-03-1951	Drees-VanSchaik	14	21
+Lieftinck	15-03-1951	02-09-1952	Drees-I	14	24
+van de Kieft	02-09-1952	13-10-1956	Drees-II	15	24
+Hofstra	13-10-1956	22-12-1958	Drees-III	15	24
+Zijlstra	22-12-1958	19-05-1959	Beel-II	15	19
+Zijlstra	19-05-1959	24-07-1963	DeQuay	14	26
+Witteveen	24-07-1963	14-04-1965	Marijnen	14	26
+Vondeling	14-04-1965	14-10-1966	Cals	14	28
+Zijlstra	14-10-1966	15-02-1967	Zijlstra	14	24
+Witteveen	15-02-1967	06-07-1971	De Jong	14	27
+Nelissen	06-07-1971	19-07-1972	Biesheuvel	14	30
+Nelissen	19-07-1972	11-05-1973	Biesheuvel II	15	29
+Duisenberg	11-05-1973	19-12-1977	Den Uyl	15	35
+Andriessen et al.	19-12-1977	11-09-1981	Van Agt		
+Van der Stee	11-09-1981	29-05-1982	Van Agt II		
+Van der Stee	29-05-1982	4-11-1982	Van Agt III		
+Ruding	4-11-1982	14-7-1986	Lubbers		
+Ruding	14-7-1986	7-11-1989	Lubbers II		
+Kok	7-11-1989	22-8-1994	Lubbers III		

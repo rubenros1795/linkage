@@ -17,3 +17,8 @@ def add_cabinet_periods(ax,fn='/home/rb/Documents/GitHub/linkage/helpers/cabinet
           ax.vlines(x=sd,ymin=ymin,ymax=ymax,color=color,linestyle=linestyle,alpha=alpha,linewidth=1)
           if text == True:
             ax.text(x=sd,y=ymin,s=r['cabinet'],rotation=90)
+
+def add_year_lines(ax,month="01",min_time=1946,max_time=1967,color='gray',alpha=.5,linestyle='--'):
+    ymin,ymax = ax.get_ylim()
+    ax.vlines(x=[f'{y}-{month}-01' for y in range(min_time,max_time)], ymin=ymin, ymax=ymin, color=color, ls=linestyle,alpha=alpha, lw=.75)
+

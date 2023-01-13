@@ -43,3 +43,31 @@ def load(cf=cf,lmodel=False,ldata=True,llabels=True,lwords=True,ldists=True,ltra
         opd['translator'] = sem_col_translator
 
     return opd
+
+def load_lda(cf=cf,agg_level="speech",ldata=True,lwords=True,ldists=True):
+    """
+    cf: config file (yaml)
+    agg_level: model type, aggregated on "speech" or "day"
+    ldata: Bool, whether to load data
+    lwords: Bool, whether to load topic keys
+    ldists: Bool, whether to load topic-doc distributions
+    """
+
+    opd = dict()
+    if ldata == True:
+        data = pd.read_csv(cf[f'data_path_{agg_level}'],sep='\t')
+        data['date'] = pd.to_datetime(data.date,infer_datetime_format=True)
+        opd['data'] = data
+    if lwords == True:
+        keys = pd.read_csv(cf[f'lda_keys_path_{agg_level}'],sep='\t',header=None)
+        keys.columns = ['i','size','words']
+        words = dict(zip(keys.i,keys.words))
+        opd['words'] = words
+    if ldists == True:
+        dists = pd.read_csv(cf[f'lda_dist_path_{agg_level}'],sep='\t',header=None).iloc[:,2:]
+        dists.columns = range(len(dists.columns))
+        dists = dists.set_index(data.date)
+        dists = dists + dists.min().abs()
+        dists = dists.div(dists.sum(axis=1), axis=0)
+        opd['dists'] = dists
+    return opd
