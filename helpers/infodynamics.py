@@ -6,6 +6,17 @@ Class for estimation of information dynamics of time-dependent probabilistic doc
 import json
 import numpy as np
 from scipy import stats
+import pandas as pd
+from tqdm import tqdm
+
+def diachronic_correlations_lookback(timestamps,theta,scale):
+    mean_correlations = []
+    for i in tqdm(range(scale,theta.shape[0])):
+        lookback_window = theta[i:i+scale,:]
+        m = np.array([np.correlate(theta[i,:],r) for r in lookback_window]).mean()
+        mean_correlations.append(m)
+    cdf = pd.DataFrame(list(zip(timestamps[scale:],mean_correlations)),columns=['date','corr'])
+    return cdf
 
 
 def kld(p, q):

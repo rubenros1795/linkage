@@ -17,6 +17,7 @@ def mutual_information(theta):
     ptj_i = p_ij / pt_i
     Ri = (R_ij * ptj_i).sum(axis=0)
     M = (Ri * pt_i).sum(axis=0)  
+    Mm = (Ri * pt_i)
     return R_ij, Ri, M
 
 def diachronic_linkage(dict_date_theta):
