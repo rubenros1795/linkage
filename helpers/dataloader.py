@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+from helpers.metrics import softmax
 
 def load(cf,model_type='lda',agg_level="speech",remove_labels=[]):
     """
@@ -37,7 +39,9 @@ def load(cf,model_type='lda',agg_level="speech",remove_labels=[]):
 
     if model_type == 't2v':
         # Transform top2vec topic similarities to positive floats for normalization
-        dists = dists + dists.min().abs()
+        # dists = dists + dists.min().abs()
+        dists = dists.to_numpy()
+        dists = np.apply_along_axis(softmax,1,dists)
         dists = dists.div(dists.sum(axis=1), axis=0)
     opd['dists'] = dists
 
