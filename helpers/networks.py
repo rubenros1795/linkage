@@ -21,7 +21,8 @@ def flatten_mi_array(theta):
 def get_network_from_mi_theta(mi_theta=None,use_dis_filter=False,dis_filter=None,thr=None,words=None,labels=None,node_text=None):
 
     edge_df = flatten_mi_array(mi_theta)
-    
+    edge_df.columns = ['source','target','weight']
+
     # Apply disparity filter and weight threshold, possibly both
     if dis_filter != None and thr == None:
         edge_df.columns = ['src','trg','nij']
@@ -30,13 +31,14 @@ def get_network_from_mi_theta(mi_theta=None,use_dis_filter=False,dis_filter=None
         edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
 
-    elif dis_filter != None and thr == None:
+    elif dis_filter != None and thr != None:
+        edge_df = edge_df[edge_df['weight'] > thr]
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
         edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
-        edge_df = edge_df[edge_df['weight'] > thr]
+
     elif dis_filter == None and thr != None:
         edge_df.columns = ['source','target','weight']
         edge_df = edge_df[edge_df['weight'] > thr]

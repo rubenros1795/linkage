@@ -17,8 +17,6 @@ def load_style(font='CG Times'):
     plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)
-    mpl.rcParams.update({"axes.grid" : True, "grid.color": "lightgrey"})
-    colors = '#3d5a80 #ee6c4d #17bebb #732c2c #a0b2a6 #61988e #e9eb87 #008148'.split(' ')
-    sns.set_palette(sns.color_palette(colors))
+    # mpl.rcParams.update({"axes.grid" : True, "grid.color": "lightgrey"})
 
-    return sns.color_palette(colors)
+    sns.set_palette(sns.color_palette('BrBG'))
