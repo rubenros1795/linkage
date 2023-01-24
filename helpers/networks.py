@@ -27,14 +27,14 @@ def get_network_from_mi_theta(mi_theta=None,use_dis_filter=False,dis_filter=None
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(['score','variance'],axis=1)
+        edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
 
     elif dis_filter != None and thr == None:
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(['score','variance'],axis=1)
+        edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
         edge_df = edge_df[edge_df['weight'] > thr]
     elif dis_filter == None and thr != None:
@@ -73,16 +73,17 @@ def get_network_from_edge_dataframe(edge_df=None,dis_filter=None,thr=None,words=
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(['score','variance'],axis=1)
+        edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
 
-    elif dis_filter != None and thr == None:
+    elif dis_filter != None and thr != None:
+        edge_df.columns = ['source','target','weight']
+        edge_df = edge_df[edge_df['weight'] > thr]
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(['score','variance'],axis=1)
+        edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
-        edge_df = edge_df[edge_df['weight'] > thr]
 
     elif dis_filter == None and thr != None:
         edge_df = edge_df[edge_df['weight'] > thr]
