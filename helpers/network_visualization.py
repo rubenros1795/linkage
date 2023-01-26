@@ -38,7 +38,7 @@ def style_text(ax,color='black',alpha=.25):
 
 ## Full plotters
 
-def plot_network(dists_subset,ax,labels,weight_threshold,df_filter,title,no_labels=True,top_btw_color=3):
+def plot_network(dists_subset,ax,labels,weight_threshold,df_filter,title,show_labels=False,top_btw_color=3):
     """
     dists_subset: speech-topic distributions
     ax: plt. Axes
@@ -75,8 +75,10 @@ def plot_network(dists_subset,ax,labels,weight_threshold,df_filter,title,no_labe
             i.set_edgecolor(grey_pal_light_dark[1])
             i.set_facecolor(grey_pal_light_dark[0])
         elif isinstance(i,matplotlib.text.Text):
-            if len(i.get_text()) != 4 and i.get_text() != title and no_labels == True:
+            if len(i.get_text()) != 4 and i.get_text() != title:
                 i.set_alpha(0)
+            if show_labels == True:
+                i.set_alpha(1)
 
 
 def plot_speaker(ax,data,dists,labels,id='nl.m.01611',min_date=None,max_date=None,remove_nonsem=True,topic_prop_threshold=1,df_threshold=.95,title=''):

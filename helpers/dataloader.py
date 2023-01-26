@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from helpers.metrics import softmax
 
-def load(cf,model_type='lda',agg_level="speech",remove_labels=[]):
+def load(cf,model_type='lda',agg_level="speech",remove_labels=[],num_topics=100):
     """
     cf: config file (yaml)
     model_type: model to use, "lda" or "t2v"
@@ -18,14 +18,14 @@ def load(cf,model_type='lda',agg_level="speech",remove_labels=[]):
     opd['data'] = data
 
     # Load keys and labels
-    keys = pd.read_csv(cf[f'{model_type}_keys_path_{agg_level}'],sep='\t')
+    keys = pd.read_csv(cf[f'{model_type}_keys_path_{agg_level}']+str(num_topics),sep='\t')
     words = dict(zip(keys.index,keys.words))
     labels = dict(zip(keys.index,keys.label))
     opd['words'] = words
     opd['labels'] = labels
 
     # Load dists
-    dists = pd.read_csv(cf[f'{model_type}_dist_path_{agg_level}'],sep='\t',header=None)
+    dists = pd.read_csv(cf[f'{model_type}_dist_path_{agg_level}']+str(num_topics),sep='\t',header=None)
     if model_type == 'lda':
         dists = dists.iloc[:,2:]
     dists.columns = range(len(dists.columns))

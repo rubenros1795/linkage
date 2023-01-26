@@ -18,30 +18,30 @@ def flatten_mi_array(theta):
     return pd.DataFrame(na).dropna()
 
 
-def get_network_from_mi_theta(mi_theta=None,use_dis_filter=False,dis_filter=None,thr=None,words=None,labels=None,node_text=None):
+def get_network_from_mi_theta(mi_theta=None,dis_filter=None,weight_threshold=None,words=None,labels=None,node_text=None):
 
     edge_df = flatten_mi_array(mi_theta)
     edge_df.columns = ['source','target','weight']
 
     # Apply disparity filter and weight threshold, possibly both
-    if dis_filter != None and thr == None:
+    if dis_filter != None and weight_threshold == None:
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
         edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
 
-    elif dis_filter != None and thr != None:
-        edge_df = edge_df[edge_df['weight'] > thr]
+    elif dis_filter != None and weight_threshold != None:
+        edge_df = edge_df[edge_df['weight'] > weight_threshold]
         edge_df.columns = ['src','trg','nij']
         edge_df = disparity_filter(edge_df,undirected=True)
         edge_df = edge_df[edge_df.score > dis_filter]
         edge_df = edge_df.drop(columns=['score','variance'])
         edge_df.columns = ['source','target','weight']
 
-    elif dis_filter == None and thr != None:
+    elif dis_filter == None and weight_threshold != None:
         edge_df.columns = ['source','target','weight']
-        edge_df = edge_df[edge_df['weight'] > thr]
+        edge_df = edge_df[edge_df['weight'] > weight_threshold]
     else:
         print('warning, no disparity and/or weight filter applied')
         
