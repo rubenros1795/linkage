@@ -18,11 +18,14 @@ def load(cf,model_type='lda',agg_level="speech",remove_labels=[],num_topics=100)
     opd['data'] = data
 
     # Load keys and labels
-    keys = pd.read_csv(cf[f'{model_type}_keys_path_{agg_level}']+str(num_topics),sep='\t')
-    words = dict(zip(keys.index,keys.words))
-    labels = dict(zip(keys.index,keys.label))
-    opd['words'] = words
-    opd['labels'] = labels
+    try:
+        keys = pd.read_csv(cf[f'{model_type}_keys_path_{agg_level}']+str(num_topics),sep='\t')
+        words = dict(zip(keys.index,keys.words))
+        labels = dict(zip(keys.index,keys.label))
+        opd['words'] = words
+        opd['labels'] = labels
+    except Exception as e:
+        print(e)
 
     # Load dists
     dists = pd.read_csv(cf[f'{model_type}_dist_path_{agg_level}']+str(num_topics),sep='\t',header=None)
@@ -43,6 +46,7 @@ def load(cf,model_type='lda',agg_level="speech",remove_labels=[],num_topics=100)
         dists = dists.to_numpy()
         dists = np.apply_along_axis(softmax,1,dists)
         dists = dists.div(dists.sum(axis=1), axis=0)
+    dists = dists[(dists.index.year > 1945) & (dists.index.year < 1967)]
     opd['dists'] = dists
 
     return opd

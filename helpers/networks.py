@@ -18,7 +18,7 @@ def flatten_mi_array(theta):
     return pd.DataFrame(na).dropna()
 
 
-def get_network_from_mi_theta(mi_theta=None,dis_filter=None,weight_threshold=None,words=None,labels=None,node_text=None):
+def get_network_from_mi_theta(mi_theta=None,dis_filter=None,weight_threshold=None,weighted=False,words=None,labels=None,node_text=None,cluster_method='louvain'):
 
     edge_df = flatten_mi_array(mi_theta)
     edge_df.columns = ['source','target','weight']
@@ -60,62 +60,11 @@ def get_network_from_mi_theta(mi_theta=None,dis_filter=None,weight_threshold=Non
 
     edge_df.columns = ['source','target','weight']
     edge_df = edge_df[edge_df.source != edge_df.target]
-    
-    tuples = [tuple(x) for x in edge_df.values]
-    G = igraph.Graph.TupleList(tuples, directed = True, edge_attrs = ['weight'])
 
-    G = G.as_undirected()
-    clustering = G.community_multilevel()
-    return G, clustering, edge_df
 
-def get_network_from_edge_dataframe(edge_df=None,dis_filter=None,thr=None,words=None,labels=None,node_text=None):
+    G = igraph.Graph.TupleList(edge_df.itertuples(index=False), directed=False, weights=weighted)
 
-    # Apply disparity filter and weight threshold, possibly both
-    if dis_filter != None and thr == None:
-        edge_df.columns = ['src','trg','nij']
-        edge_df = disparity_filter(edge_df,undirected=True)
-        edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(columns=['score','variance'])
-        edge_df.columns = ['source','target','weight']
-
-    elif dis_filter != None and thr != None:
-        edge_df.columns = ['source','target','weight']
-        edge_df = edge_df[edge_df['weight'] > thr]
-        edge_df.columns = ['src','trg','nij']
-        edge_df = disparity_filter(edge_df,undirected=True)
-        edge_df = edge_df[edge_df.score > dis_filter]
-        edge_df = edge_df.drop(columns=['score','variance'])
-        edge_df.columns = ['source','target','weight']
-
-    elif dis_filter == None and thr != None:
-        edge_df = edge_df[edge_df['weight'] > thr]
-    else:
-        print('warning, no disparity and/or weight filter applied')
-
-    # Set labels or words, if given 
-    if node_text == 'labels':
-        edge_df['source']  = edge_df['source'].apply(lambda x: labels[x])
-        edge_df['target']  = edge_df['target'].apply(lambda x: labels[x])
-        
-    if node_text == 'words':
-        edge_df['source']  = edge_df['source'].apply(lambda x: ' '.join(words[x].split(' ')[:4]))
-        edge_df['target']  = edge_df['target'].apply(lambda x: ' '.join(words[x].split(' ')[:4]))
-    
-    if node_text == 'words_n':
-        edge_df['source']  = edge_df['source'].apply(lambda x: '\n'.join(words[x].split(' ')[:3]))
-        edge_df['target']  = edge_df['target'].apply(lambda x: '\n'.join(words[x].split(' ')[:3]))
-    
-
-    # Remove loops (source == target)
-    edge_df = edge_df[edge_df.source != edge_df.target]
-    
-    # Create Graph
-    tuples = [tuple(x) for x in edge_df.values]
-    G = igraph.Graph.TupleList(tuples, directed = True, edge_attrs = ['weight'])
-
-    G = G.as_undirected()
-    clustering = G.community_multilevel()
-
+    clustering = G.community_multilevel() if cluster_method == 'louvain' else G.community_leiden()
     return G, clustering, edge_df
 
 def get_betweenness_values(g):
@@ -142,18 +91,15 @@ def betweenness_centralization(G):
     return sum(max_temparr - i for i in temparr) / (vnum - 1)
 
 
-def get_network_statistics(dict_date_theta,df=None,thr=None):
+def get_network_statistics(dict_date_theta,weight_threshold=None,df_filter=None,weighted=False,cluster_method='louvain'):
     r = []
 
     for k,v in dict_date_theta.items():
         tmp_ = {"date":k}
-        G, clustering, edge_df = get_network_from_mi_theta(mi_theta=v,dis_filter=df,thr=thr)
-        tmp_['modularity'] = G.modularity(clustering)
+        G, clustering, edge_df = get_network_from_mi_theta(mi_theta=v,dis_filter=df_filter,weight_threshold=weight_threshold,weighted=weighted,cluster_method=cluster_method)
+        tmp_['modularity'] = G.modularity(clustering,weights=G.es['weight']) if weighted == True else G.modularity(clustering)
         tmp_['average_degree'] = igraph.mean(G.degree())
-        tmp_['betweenness_centralization'] = betweenness_centralization(G)
-        tmp_['degree_centralization'] = get_centralization_of_degree(nx.DiGraph(G.get_edgelist()))
         r.append(tmp_)
-    
     return pd.DataFrame(r)
 
 def disparity_filter(table, undirected = False, return_self_loops = False):

@@ -51,7 +51,7 @@ def plot_network(dists_subset,ax,labels,weight_threshold,df_filter,title,show_la
     """
 
     theta,_,__ = mutual_information(dists_subset)
-    g,comm,_ = get_network_from_mi_theta(mi_theta=theta,node_text='labels',labels=labels,dis_filter=df_filter,thr=weight_threshold)
+    g,comm,_ = get_network_from_mi_theta(mi_theta=theta,node_text='labels',labels=labels,dis_filter=df_filter,weight_threshold=weight_threshold)
     betweenness_values = get_betweenness_values(g)
     
     if top_btw_color not in [None,0]:
@@ -128,7 +128,7 @@ def plot_speaker(ax,data,dists,labels,id='nl.m.01611',min_date=None,max_date=Non
         theta_flat = theta_flat[~theta_flat.source.isin(speaker_topic_selection)]
         theta_flat = theta_flat[~theta_flat.target.isin(speaker_topic_selection)]
 
-    g,comm,_ = get_network_from_edge_dataframe(edge_df=theta_flat,dis_filter=df_threshold,thr=0,node_text='labels',labels=labels)
+    g,comm,_ = get_network_from_edge_dataframe(edge_df=theta_flat,dis_filter=df_threshold,weight_threshold=0,node_text='labels',labels=labels)
     layout = g.layout_kamada_kawai()
 
     visual_style = default_style(g)
