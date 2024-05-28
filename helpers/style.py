@@ -3,15 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 
-def load_style(font='Latex'):
-    mpl.rcParams['text.latex.preamble'] = [
-        r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
-        r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
-        r'\usepackage{helvet}',    # set the normal font here
-        r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
-        r'\sansmath'               # <- tricky! -- gotta actually tell tex to use!
-]  
+def load_style():
 
+    plt.rcParams['font.family'] = 'Aptos'
     SMALL_SIZE = 10
     MEDIUM_SIZE = 12
     BIGGER_SIZE = 22

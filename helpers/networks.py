@@ -43,7 +43,7 @@ def get_network_from_mi_theta(mi_theta=None,dis_filter=None,weight_threshold=Non
         edge_df.columns = ['source','target','weight']
         edge_df = edge_df[edge_df['weight'] > weight_threshold]
     else:
-        print('warning, no disparity and/or weight filter applied')
+        pass
         
     if node_text == 'labels':
         edge_df['source']  = edge_df['source'].apply(lambda x: labels[x])

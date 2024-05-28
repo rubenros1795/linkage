@@ -1,52 +1,60 @@
 import pandas as pd
 import numpy as np
+import os
+from scipy.stats import zscore
 from helpers.metrics import softmax
 
-def load(cf,model_type='lda',agg_level="speech",remove_labels=[],num_topics=100):
-    """
-    cf: config file (yaml)
-    model_type: model to use, "lda" or "t2v"
-    agg_level: aggregation level of the model, "speech" or "day"
-    remove_labels: topic labels to exclude from distributions, either empty or ["rhet", "proc", "nonsem"]
-    """
+def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
+         topic_mb_agg = True,
+         time_agg = "6M",
+         filter_thematic = True,
+         zscore_filter = True,
+         plenary_filter = True,
+         ):
 
-    opd = dict()
+    dists = pd.read_csv(os.path.join(lda_path, 'dist.tsv'),sep='\t')
+    dat = pd.read_csv(os.path.join(lda_path, 'data.tsv'),sep='\t',parse_dates=['date'])
+    topic_dates = dict(zip(dat.topic_id,dat.date))
+    topic_sesst = dict(zip(dat.topic_id,dat.sess_type))
+    keys = pd.read_csv(os.path.join(lda_path, 'keys.tsv'),sep='\t')
+    keys_df = keys.copy()
+    keys = dict(zip(keys.ix,keys.label))
 
-    # Load data
-    data = pd.read_csv(cf[f'data_path_{agg_level}'],sep='\t')
-    data['date'] = pd.to_datetime(data.date,infer_datetime_format=True)
-    opd['data'] = data
+    # Average Member Speeches per Session
+    if topic_mb_agg == True:
+        dists = dists.groupby(dat[['topic_id','member-ref']].astype(str).agg('_'.join,axis=1)).mean()
+        dists.index = dists.index.str.split('_').str[0]
+    else:
+        dists.index = dat['topic_id']
 
-    # Load keys and labels
-    try:
-        keys = pd.read_csv(cf[f'{model_type}_keys_path_{agg_level}']+str(num_topics),sep='\t')
-        words = dict(zip(keys.index,keys.words))
-        labels = dict(zip(keys.index,keys.label))
-        opd['words'] = words
-        opd['labels'] = labels
-    except Exception as e:
-        print(e)
+    # Filter Plenary sessions
+    if plenary_filter == True:
+        dists = dists[dists.index.map(topic_sesst) == 'plenary']
+        dat = dat[dat.sess_type == 'plenary']
 
-    # Load dists
-    dists = pd.read_csv(cf[f'{model_type}_dist_path_{agg_level}']+str(num_topics),sep='\t',header=None)
-    if model_type == 'lda':
-        dists = dists.iloc[:,2:]
-    dists.columns = range(len(dists.columns))
+    # Aggregate on time period
+    if time_agg == '6M':
+        topic_dates = {topic:pd.Timestamp(year = _.year, month = 1 if _.month < 7 else 6, day = 1) for topic,_ in topic_dates.items()}
+    elif time_agg == '1M':
+        topic_dates = {topic:pd.Timestamp(year = _.year, month = _.month, day = 1) for topic,_ in topic_dates.items()}
+    if time_agg == 'Y':
+        topic_dates = {topic:_.year for topic,_ in topic_dates.items()}
+    else:
+        topic_dates = topic_dates
 
-    if len(remove_labels) != 0:
-        dists = dists[[t for t,l in labels.items() if l not in remove_labels]]
-        sem_col_translator = {c:int(k) for c,k in enumerate(dists.columns)}
-        opd['translator'] = sem_col_translator
+    dists.index = dists.index.map(topic_dates)
 
-    dists = dists.set_index(data.date)
-
-    if model_type == 't2v':
-        # Transform top2vec topic similarities to positive floats for normalization
-        # dists = dists + dists.min().abs()
-        dists = dists.to_numpy()
-        dists = np.apply_along_axis(softmax,1,dists)
+    # Filter Thematic Topics (and normalize again)
+    ## Because MI function resets column indices, save original link between topic id - labels
+    if filter_thematic:
+        dists = dists[[v for v in dists.columns if 'rhet' not in keys[int(v)] and 'nonse' not in keys[int(v)] and 'proc' not in keys[int(v)]]]
         dists = dists.div(dists.sum(axis=1), axis=0)
-    dists = dists[(dists.index.year > 1945) & (dists.index.year < 1967)]
-    opd['dists'] = dists
+        coltrans = {c:keys[int(cc)] for c,cc in enumerate(dists.columns)}
 
-    return opd
+    if zscore_filter:
+        # Keep only topics that have an above-average score (from the persp. of their diachronic evolution)
+        dz = dists.apply(zscore,axis=0)
+        dists = dists.where(dz >= 0, 0.0000000000001)
+        dists = dists.div(dists.sum(axis=1), axis=0)
+    
+    return dists, dat, coltrans, keys

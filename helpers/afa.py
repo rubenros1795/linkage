@@ -393,7 +393,7 @@ def multi_detrending(y, step_size, q, order):
     return result
 
 
-def adaptive_filter(y, span=56):
+def adaptive_filter(y, span=15):
     #if len(y) % 2:
     #   y=y[:-1]
 
@@ -401,6 +401,6 @@ def adaptive_filter(y, span=56):
     y_dt = np.mat([float(j) for j in y])
     _, y_smooth = detrending_method(y_dt, w, 1)
     
-    return y_smooth.T
+    return np.squeeze(np.asarray(y_smooth.T))
 
 # %%
