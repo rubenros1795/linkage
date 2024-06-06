@@ -10,6 +10,7 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
          filter_thematic = True,
          zscore_filter = True,
          plenary_filter = True,
+         quick_return = False
          ):
 
     dists = pd.read_csv(os.path.join(lda_path, 'dist.tsv'),sep='\t')
@@ -17,8 +18,10 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
     topic_dates = dict(zip(dat.topic_id,dat.date))
     topic_sesst = dict(zip(dat.topic_id,dat.sess_type))
     keys = pd.read_csv(os.path.join(lda_path, 'keys.tsv'),sep='\t')
-    keys_df = keys.copy()
     keys = dict(zip(keys.ix,keys.label))
+    
+    if quick_return == True:
+        return dists, dat, keys
 
     # Average Member Speeches per Session
     if topic_mb_agg == True:
@@ -57,4 +60,4 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
         dists = dists.where(dz >= 0, 0.0000000000001)
         dists = dists.div(dists.sum(axis=1), axis=0)
     
-    return dists, dat, coltrans, keys
+    return (dists, dat, coltrans, keys) if zscore_filter == False else (dists, dat, coltrans, keys, dz)
