@@ -54,11 +54,14 @@ def create_community_chains(events, min_chain_len = 6):
 
     return [c for c in chains if len(c) > min_chain_len]
 
-def get_tc(networks, size_dict=None, overlap_threshold=.35, min_chain_len=2, verbose=True):
+def get_tc(networks, size_dict=None, overlap_threshold=.35, min_chain_len=2, louvain_res=1, verbose=True):
     tc = TemporalClustering()
 
     for cc,(c,g) in enumerate(sorted(networks.items(),key = lambda n: n[0])):
-        coms = algorithms.leiden(g,weights='pmi')
+        if louvain_res == None:
+            coms = algorithms.leiden(g,weights='pmi')
+        else:
+            coms = algorithms.louvain(g,weight='pmi',resolution=louvain_res)
         tc.add_clustering(coms, cc)
 
     # Sizes
@@ -91,7 +94,7 @@ def get_tc(networks, size_dict=None, overlap_threshold=.35, min_chain_len=2, ver
 
     return tc, g, sizes, paths, metadata
 
-def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', add_non_path_nodes = True, figsize=(60,10), save = 'figs/chains.pdf'):
+def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', annotate_max_topic=True, add_non_path_nodes = True, figsize=(60,10), save = 'figs/chains.pdf'):
 
     cids = [[f"{i}_{c}" for c in range(len(cc.communities))] for i,cc in tc.clusterings.items()]
     cids = [item for items in cids for item in items]
@@ -101,7 +104,7 @@ def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', add_non_path_nodes = T
             if cid not in g.nodes:
                 g.add_node(cid)
 
-    paths = sorted(paths, key=len)
+    paths = sorted(paths, key=lambda x: int(x[0].split('_')[0]))
     layer_mapping = {node: int(node.split('_')[0]) for node in g.nodes}
     for node, layer in layer_mapping.items():
         g.nodes[node]['layer'] = layer
@@ -117,12 +120,12 @@ def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', add_non_path_nodes = T
     y_edges = [[pos[edge[0]][1], pos[edge[1]][1]] for edge in edges]
 
     # Create a color palette
-    colors = list(sns.color_palette(cmap, len(paths)))
-    random.shuffle(colors)
+    colors = list(sns.color_palette(cmap, len(paths))) if cmap.startswith('c') == False else [cmap[1:]] * len(paths)
+    # random.shuffle(colors)
 
     # Track node colors and chains
     node_chain_count = {node: 0 for node in g.nodes}
-    node_colors = {node: (0.15, 0.15, 0.15, 1) for node in g.nodes}  # Default to gray with alpha 0.25
+    node_colors = {node: "lightgrey" for node in g.nodes}  # Default to gray with alpha 0.25
     edge_alphas = {edge: 0.1 for edge in g.edges}
     node_sizes = {node: 50 for node in g.nodes}  # Default size for out-chain nodes
 
@@ -167,9 +170,15 @@ def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', add_non_path_nodes = T
 
     # Draw labels with annotate
     for node in g.nodes:
+        if add_non_path_nodes == True:
+            if node_chain_count[node] == 0:
+                continue
         if node_chain_count[node] > 0:  # Annotate only in-chain nodes
             period, com = (int(x) for x in node.split('_'))
-            txt = sizes[period][com].replace(' ','\n').upper()
+            if annotate_max_topic == True:
+                txt = node + '\n' + sizes[period][com].replace(' ','\n').upper()
+            else:
+                txt = node
             ax.annotate(txt, xy=pos[node], xytext=(0, 0), textcoords='offset points', fontsize=4, color='black', ha='center', va='center', zorder=5,fontweight='bold')
             
     # Remove axis
