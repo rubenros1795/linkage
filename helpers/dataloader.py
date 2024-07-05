@@ -41,7 +41,7 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
     elif time_agg == '1M':
         topic_dates = {topic:pd.Timestamp(year = _.year, month = _.month, day = 1) for topic,_ in topic_dates.items()}
     if time_agg == 'Y':
-        topic_dates = {topic:_.year for topic,_ in topic_dates.items()}
+        topic_dates = {tid:pd.Timestamp(year=int(tid.split('.')[4][:4]),month=1,day=1) for tid in dat.topic_id}
     else:
         topic_dates = topic_dates
 
