@@ -1,7 +1,6 @@
 import networkx as nx
 import numpy as np
 import pandas as pd
-import netrd
 from scipy.stats import rankdata
 from scipy.sparse.csgraph import laplacian
 from scipy.linalg import eigvalsh
@@ -29,11 +28,11 @@ sim_dict = dict()
 
 from iteration_utilities import first
 
-def jaccard(G1,G2):   
+def jaccard(G1,G2):
     E1,E2 = [set(G.edges()) for G in [G1,G2]]
     return len(E1&E2)/len(E1|E2)
 
-def jaccard_weighted(G1,G2, attr="weight"):   
+def jaccard_weighted(G1,G2, attr="weight"):
     E1,E2 = [set(G.edges()) for G in [G1,G2]]
     if (len(E1)>0 and attr in G1[first(E1)[0]][first(E1)[1]]) or (len(E2)>0 and attr in G2[first(E2)[0]][first(E2)[1]]):
         E_overlap = E1&E2
@@ -98,7 +97,7 @@ def get_neigbors(G, v, k):
     neighbors = set()
     k_hop_n = []
     for i in range(k):
-        if i==0: 
+        if i==0:
             k_hop_n.append(set(G.neighbors(v)))
             neighbors |= set(k_hop_n[i])
         else:
@@ -107,8 +106,8 @@ def get_neigbors(G, v, k):
                 nn |= set(G.neighbors(node))
             k_hop_n.append(set(nn - neighbors - set([v])))
             neighbors |= k_hop_n[i]
-    return neighbors  
-        
+    return neighbors
+
 
 def nodes_neighborhood(G1,G2, k):
     V1,V2 = [set(G.nodes()) for G in [G1,G2]]
@@ -140,7 +139,7 @@ def getMCS(g1, g2):
     return mcs
 
 
-# ## 3.1.7 Vector Similarity Algorithm 
+# ## 3.1.7 Vector Similarity Algorithm
 
 # In[18]:
 
@@ -153,10 +152,10 @@ def construct_vsgraph(G):
     label = 'weight' if nx.is_weighted(G) else None
     degree = {}
     if isinstance(G, nx.Graph):
-        degree = G.degree(weight=label) 
-    else: 
+        degree = G.degree(weight=label)
+    else:
         degree = G.out_degree(weight=label)
-    
+
     #reconstruct graph
     E = list(G.edges(data=True))
     for edge in E:
@@ -164,15 +163,15 @@ def construct_vsgraph(G):
         if isinstance(G, nx.Graph):
             Gm.add_edge(edge[0], edge[1], weight=w*q[edge[0]]/degree[edge[0]])
             Gm.add_edge(edge[1], edge[0], weight=w*q[edge[1]]/degree[edge[1]])
-        else: 
+        else:
             Gm.add_edge(edge[0], edge[1], weight=w*q[edge[0]]/degree[edge[0]])
     return Gm
-    
-        
-def compare_graph_weghts(G1,G2, attr="weight"):   
+
+
+def compare_graph_weghts(G1,G2, attr="weight"):
     E1,E2 = [set(G.edges()) for G in [G1,G2]]
     E_union = E1|E2
-    sim = 0    
+    sim = 0
     for edge in E_union:
         if G1.has_edge(*edge):
             if G2.has_edge(*edge):
@@ -180,9 +179,9 @@ def compare_graph_weghts(G1,G2, attr="weight"):
             else:
                 sim+=1
         else:
-            sim+=1   
+            sim+=1
     return sim/len(E_union)
-    
+
 
 def vector_similarity(G1,G2):
     V1,V2 = [set(G.nodes()) for G in [G1,G2]]
@@ -207,7 +206,7 @@ def vertex_ranking(G1,G2):
     d = 0
     for i in range(num):
         d += (i-(num-i-1))**2
-    
+
     #compute centralities
     pi1,pi2 = nx.pagerank(G1), nx.pagerank(G2)
     for v in (V1-V_overlap):
@@ -215,7 +214,7 @@ def vertex_ranking(G1,G2):
     for v in (V2-V_overlap):
         pi1[v]=0
     ranks1, ranks2 = rankdata(list(pi1.values()), method='min'),rankdata(list(pi2.values()), method='min')
-    
+
     #compute similarity
     sim = 0
     for i in range(num):
@@ -247,19 +246,19 @@ def degree_vector_histogram(graph):
         hist = np.array([counter[v] for v in range(max_deg+1)])
         return vec, hist
 
-    
-def degreeJSD(G1,G2):
-    deg1, hist1 = degree_vector_histogram(G1)
-    deg2, hist2 = degree_vector_histogram(G2)
-    max_len = max(len(hist1), len(hist2))
-    p1 = np.pad(hist1, (0, max_len - len(hist1)), 'constant', constant_values=0)
-    p2 = np.pad(hist2, (0, max_len - len(hist2)), 'constant', constant_values=0)
-    if sum(hist1)>0:
-        p1 = p1/sum(p1)
-    if sum(hist2)>0:
-        p2 = p2/sum(p2)
-    return netrd.utilities.entropy.js_divergence(p1,p2)**(1/2)
-    
+
+# def degreeJSD(G1,G2):
+#     deg1, hist1 = degree_vector_histogram(G1)
+#     deg2, hist2 = degree_vector_histogram(G2)
+#     max_len = max(len(hist1), len(hist2))
+#     p1 = np.pad(hist1, (0, max_len - len(hist1)), 'constant', constant_values=0)
+#     p2 = np.pad(hist2, (0, max_len - len(hist2)), 'constant', constant_values=0)
+#     if sum(hist1)>0:
+#         p1 = p1/sum(p1)
+#     if sum(hist2)>0:
+#         p2 = p2/sum(p2)
+#     return netrd.utilities.entropy.js_divergence(p1,p2)**(1/2)
+
 
 
 # ## 3.1.15 Communicability Sequence Entropy
@@ -274,32 +273,32 @@ def create_comm_matrix(C, dictV):
         for v2 in C[v]:
             Ca[dictV[v]][dictV[v2]] = C[v][v2]
     return Ca
-    
 
-def CommunicabilityJSD(G1, G2):
-    dist = 0
-    V1,V2 = [set(G.nodes()) for G in [G1,G2]]
-    N1, N2 = len(V1), len(V2)
-    V = list(V1|V2)
-    N = len(V)
-    dictV = dict(zip(V, list(range(N))))
-    
-    Ca1 = create_comm_matrix(nx.communicability_exp(G1), dictV)
-    Ca2 = create_comm_matrix(nx.communicability_exp(G2), dictV)
 
-    lil_sigma1 = np.triu(Ca1).flatten()
-    lil_sigma2 = np.triu(Ca2).flatten()
+# def CommunicabilityJSD(G1, G2):
+#     dist = 0
+#     V1,V2 = [set(G.nodes()) for G in [G1,G2]]
+#     N1, N2 = len(V1), len(V2)
+#     V = list(V1|V2)
+#     N = len(V)
+#     dictV = dict(zip(V, list(range(N))))
 
-    big_sigma1 = sum(lil_sigma1[np.nonzero(lil_sigma1)[0]])
-    big_sigma2 = sum(lil_sigma2[np.nonzero(lil_sigma2)[0]])
+#     Ca1 = create_comm_matrix(nx.communicability_exp(G1), dictV)
+#     Ca2 = create_comm_matrix(nx.communicability_exp(G2), dictV)
 
-    P1 = lil_sigma1 / big_sigma1
-    P2 = lil_sigma2 / big_sigma2
-    P1 = np.array(sorted(P1))
-    P2 = np.array(sorted(P2))
+#     lil_sigma1 = np.triu(Ca1).flatten()
+#     lil_sigma2 = np.triu(Ca2).flatten()
 
-    dist = netrd.utilities.entropy.js_divergence(P1, P2)
-    return dist
+#     big_sigma1 = sum(lil_sigma1[np.nonzero(lil_sigma1)[0]])
+#     big_sigma2 = sum(lil_sigma2[np.nonzero(lil_sigma2)[0]])
+
+#     P1 = lil_sigma1 / big_sigma1
+#     P2 = lil_sigma2 / big_sigma2
+#     P1 = np.array(sorted(P1))
+#     P2 = np.array(sorted(P2))
+
+#     dist = netrd.utilities.entropy.js_divergence(P1, P2)
+#     return dist
 
 
 # ## 3.1.19 λ-distances
@@ -320,11 +319,11 @@ def lambda_distances(G1, G2):
             for l in range(len(l1)):
                 ev1 = np.abs(eigvalsh(l1[l]))
                 ev2 = np.abs(eigvalsh(l2[l]))
-                d[labels[l]]= np.linalg.norm(ev1 - ev2)      
+                d[labels[l]]= np.linalg.norm(ev1 - ev2)
         except Exception:
             for l in range(len(labels)):
                 d[labels[l]]= "None"
-        return d   
+        return d
 
 
 # ## 3.1.26 Signature similarity (SS)
@@ -339,17 +338,17 @@ def compute_features(G):
     features = []
     q = nx.pagerank(G)
     Gm = construct_vsgraph(G)
-    
+
     for row in q:
         features.append([str(row), q[row]])
         #features[(str(row))]=q[row]
-    
+
     E = set(Gm.edges())
     for edge in E:
         t = str(edge[0])+"_"+str(edge[1])
-        w = Gm[edge[0]][edge[1]]['weight'] 
+        w = Gm[edge[0]][edge[1]]['weight']
         #features[t]=w
-        features.append([t, w])   
+        features.append([t, w])
     return features
 
 def encode_fingerprint(text):
@@ -357,7 +356,7 @@ def encode_fingerprint(text):
 
 def text2hash(h):
     for i in range(len(h)):
-        h[i][0]=encode_fingerprint(h[i][0])  
+        h[i][0]=encode_fingerprint(h[i][0])
     return h
 
 def get_fingerprint(h):
@@ -372,16 +371,16 @@ def get_fingerprint(h):
         else:
             arr[j]=0
     return arr
-    
-    
+
+
 
 def signature_similarity(G1, G2):
     h1 = get_fingerprint(text2hash(compute_features(G1)))
     h2 = get_fingerprint(text2hash(compute_features(G2)))
     dist = 1 - hamming(h1,h2)/len(h1)
-    
+
     return dist
-    
+
 
 
 # ## 3.1.28 LD-measure
@@ -424,4 +423,3 @@ def node_distance(G):
         a[idx] = [counts[l] for l in range(1, N + 1)]
 
     return a / (N - 1)
-    

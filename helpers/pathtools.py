@@ -21,7 +21,7 @@ def overlap_coefficient(set_a, set_b):
     return 1
   else:
     return intersection / smaller_set
-    
+
 def jaccard_similarity(list1, list2):
     return len(set(list1).intersection(set(list2))) / len(set(list1).union(set(list2)))
 
@@ -36,7 +36,7 @@ def chain2topic(communities,chain,s=4):
 def create_community_chains(events, min_chain_len = 6):
     chains = []
     visited = set()
-    
+
     def follow_chain(start):
         chain = [start]
         current = start
@@ -66,8 +66,8 @@ def get_tc(networks, size_dict=None, overlap_threshold=.35, min_chain_len=2, lou
 
     # Sizes
     if size_dict:
-        sizes = {i:{cc:max([(t,s) for t,s in size_dict[i] if t in c],key=lambda x:x[1])[0] 
-            for cc,c in enumerate(json.loads(tc.get_clustering_at(i).to_json())['communities'])} 
+        sizes = {i:{cc:max([(t,s) for t,s in size_dict[i] if t in c],key=lambda x:x[1])[0]
+            for cc,c in enumerate(json.loads(tc.get_clustering_at(i).to_json())['communities'])}
             for i in tc.get_observation_ids()}
 
     # Get 'Flows' of communities
@@ -81,13 +81,13 @@ def get_tc(networks, size_dict=None, overlap_threshold=.35, min_chain_len=2, lou
     if verbose == True:
         print('average n. of comms per snapshot',np.mean([len(tc.get_clustering_at(d).communities) for d in range(cc)]))
         print(len(paths), 'found in temporal networks')
-    
+
     g = lc.polytree()
     metadata = pd.DataFrame(list(g.nodes),columns=['node'])
     metadata['in_degree'] = metadata.node.map(dict(g.in_degree()))
     metadata['out_degree'] = metadata.node.map(dict(g.out_degree()))
     metadata['in_chain'] = metadata.node.apply(lambda n: True if n in set([item for items in paths for item in items]) else False)
-    metadata['topics'] = metadata.node.apply(lambda n: ', '.join(tc.get_community(n)))
+    # metadata['topics'] = metadata.node.apply(lambda n: ', '.join(tc.get_community(n)))
     metadata['time'] = metadata.node.apply(lambda n: sorted(list(networks.keys()))[int(n.split('_')[0])])
     metadata['is_path_start'] = metadata.node.apply(lambda n: True if n in [p[0] for p in paths] else False)
     metadata['is_path_end'] = metadata.node.apply(lambda n: True if n in [p[-1] for p in paths] else False)
@@ -149,7 +149,7 @@ def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', annotate_max_topic=Tru
         for node in chain:
             node_colors[node] = color  # Set node color with alpha 1.0
             node_sizes[node] = 750  # In-chain node size
-    
+
     node_sizes = [node_sizes[node] for node in g.nodes]
     node_colors = [node_colors[node] for node in g.nodes]
 
@@ -180,7 +180,7 @@ def plot_flows(g, tc, paths, networks, sizes, cmap='hsv', annotate_max_topic=Tru
             else:
                 txt = node
             ax.annotate(txt, xy=pos[node], xytext=(0, 0), textcoords='offset points', fontsize=4, color='black', ha='center', va='center', zorder=5,fontweight='bold')
-            
+
     # Remove axis
     ax.axis('off')
 

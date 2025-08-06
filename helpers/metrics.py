@@ -1,12 +1,59 @@
-'''
-Relative entropy measures
-    taken from https://github.com/centre-for-humanities-computing/newsFluxus/blob/master/src/tekisuto/metrics/entropies.py
-    commit 1fb16bc91b99716f52b16100cede99177ac75f55
-'''
-
 import numpy as np
 import pandas as pd
 from scipy import stats
+import networkx as nx
+
+def mutual_information_smooth(theta):
+    """
+    theta (np.array): numpy array with rows as document-topic mixtures.
+
+    Returns:
+    R_ij: np.array of linkage scores as measured with mutual information.
+    Ri: np.array of average mutual information for each topic.
+    M: float, overall mutual information.
+    """
+    import math
+
+    def _log2(n):
+        return math.log2(n)
+
+    def pmi_delta_score(ab, a, b, cz, factor):
+        weight = (ab / (ab + 1)) * (min(a, b) / (min(a, b) + 1))
+        return factor * weight * (_log2(ab * cz) - _log2(a * b))
+
+    # p_ij = P(t_i, t_j) - joint probability of topics t_i and t_j
+    p_ij = theta[:,:,None] * theta[:,None,:]
+    p_ij = p_ij.sum(axis=0) / p_ij.sum()
+
+    # pt_i = P(t_i) - marginal probability of topic t_i
+    pt_i = theta.sum(axis=0)
+    pt_i = pt_i / pt_i.sum()
+
+    # Calculate the corpus size and the factor
+    cz = theta.sum()
+    factor = 1  # Assuming factor is 1 if not specified
+
+    # Calculate R_ij using PMI-DELTA score
+    R_ij = np.zeros_like(p_ij)
+    for i in range(p_ij.shape[0]):
+        for j in range(p_ij.shape[1]):
+            if pt_i[i] > 0 and pt_i[j] > 0 and p_ij[i, j] > 0:
+                ab = p_ij[i, j] * cz
+                a = pt_i[i] * cz
+                b = pt_i[j] * cz
+                R_ij[i, j] = pmi_delta_score(ab, a, b, cz, factor)
+
+    # ptj_i = P(t_j|t_i) - conditional probability of topic t_j given topic t_i
+    ptj_i = p_ij / pt_i
+
+    # Ri = Average mutual information for each topic
+    Ri = (R_ij * ptj_i).sum(axis=0)
+
+    # M = Overall mutual information
+    M = (Ri * pt_i).sum()
+
+    return R_ij, Ri, M
+
 
 def shannon_entropy(p):
     """Calculates shannon entropy in bits.
@@ -37,7 +84,7 @@ def kld(p, q):
 
 
 def jsd(p, q, base=2):
-    '''Pairwise Jensen-Shannon Divergence for two probability distributions  
+    '''Pairwise Jensen-Shannon Divergence for two probability distributions
     '''
     # convert to np.array
     p, q = np.asarray(p), np.asarray(q)
@@ -50,7 +97,7 @@ def jsd(p, q, base=2):
 def cosine_distance(p, q):
     '''Cosine distance for two vectors
     '''
-    
+
     p, q = np.asarray(p), np.asarray(q)
 
     dot_prod = np.dot(p, q)
@@ -74,7 +121,7 @@ def make_foote(quart=5):
 def foote_novelty(distdf, foote_size=5):
     foote=make_foote(foote_size)
     distmat = distdf.values if type(distdf)==pd.DataFrame else distdf
-    
+
     axis1, axis2 = distmat.shape
     assert axis1 == axis2
     distsize = axis1
@@ -100,6 +147,34 @@ def overlap_coefficient(set_a, set_b):
     return 1
   else:
     return intersection / smaller_set
-    
+
 def jaccard_similarity(list1, list2):
     return len(set(list1).intersection(set(list2))) / len(set(list1).union(set(list2)))
+
+## Modularity & Density
+def to_edge_list(rij):
+    # rij is a 2D NumPy array
+    edges = []
+    n = rij.shape[0]
+    for i in range(n):
+        for j in range(n):
+            w = rij[i, j]
+            if w > 0:
+                edges.append((i, j, w))
+    return edges
+
+def modularity(v):
+    rij, ri, m = mutual_information_smooth(v)
+    edf = pd.DataFrame(rij).stack().reset_index()
+    edf = edf[edf[0] > 0]
+    G = nx.from_pandas_edgelist(df = edf, source = 'level_0', target = 'level_1', edge_attr=0)
+    comms = nx.community.louvain_communities(G,weight=0,resolution=2.5)
+    return nx.community.quality.modularity(G,communities=comms)
+
+## Density
+def density(v):
+    rij, ri, m = mutual_information_smooth(v)
+    edf = pd.DataFrame(rij).stack().reset_index()
+    edf = edf[edf[0] > 0]
+    G = nx.from_pandas_edgelist(df = edf, source = 'level_0', target = 'level_1', edge_attr=0)
+    return nx.density(G)

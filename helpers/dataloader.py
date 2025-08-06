@@ -3,25 +3,37 @@ import numpy as np
 import os
 from scipy.stats import zscore
 from helpers.metrics import softmax
+import xml.etree.ElementTree as ET
 
 def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
+         dist_path = None,
+         dat_path = None,
+         keys_path = None,
          topic_mb_agg = True,
          time_agg = "6M",
          filter_thematic = True,
          zscore_filter = True,
-         plenary_filter = True,
          quick_return = False
          ):
 
-    dists = pd.read_csv(os.path.join(lda_path, 'dist.tsv'),sep='\t')
-    dat = pd.read_csv(os.path.join(lda_path, 'data.tsv'),sep='\t',parse_dates=['date'])
+    dist_path = os.path.join(lda_path, 'dist.tsv') if dist_path == None else dist_path
+    dat_path = os.path.join(lda_path, 'data.tsv') if dat_path == None else dat_path
+    keys_path = os.path.join(lda_path, 'keys.tsv') if keys_path == None else keys_path
+
+    dists = pd.read_csv(dist_path,sep='\t')
+    dat = pd.read_csv(dat_path,sep='\t',usecols=['date','member-ref','topic_id'], parse_dates=['date'])
     topic_dates = dict(zip(dat.topic_id,dat.date))
-    topic_sesst = dict(zip(dat.topic_id,dat.sess_type))
-    keys = pd.read_csv(os.path.join(lda_path, 'keys.tsv'),sep='\t')
-    keys = dict(zip(keys.ix,keys.label))
-    
+
+    keys_df = pd.read_csv(keys_path,sep='\t')
+
+    if 'policy_label' in keys_df.columns:
+        keys = dict(zip(keys_df.ix,keys_df['keys']))
+    elif 'policy_label' not in keys_df.columns and filter_thematic == True:
+        print('no labels found, thematic filtering not possible.')
+        return
+
     if quick_return == True:
-        return dists, dat, keys
+        return dists, dat, keys_df
 
     # Average Member Speeches per Session
     if topic_mb_agg == True:
@@ -29,11 +41,6 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
         dists.index = dists.index.str.split('_').str[0]
     else:
         dists.index = dat['topic_id']
-
-    # Filter Plenary sessions
-    if plenary_filter == True:
-        dists = dists[dists.index.map(topic_sesst) == 'plenary']
-        dat = dat[dat.sess_type == 'plenary']
 
     # Aggregate on time period
     if time_agg == '6M':
@@ -48,9 +55,13 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
     dists.index = dists.index.map(topic_dates)
 
     # Filter Thematic Topics (and normalize again)
-    ## Because MI function resets column indices, save original link between topic id - labels
+    # ---> Because MI function resets column indices, save original link between topic id - labels
+
+    coltrans = None
+
     if filter_thematic:
-        dists = dists[[v for v in dists.columns if 'rhet' not in keys[int(v)] and 'nonse' not in keys[int(v)] and 'proc' not in keys[int(v)]]]
+        policy_topics = keys_df[keys_df.policy_label.astype(int)==1].ix.astype(str).tolist()
+        dists = dists[[str(c) for c in dists.columns if str(c) in policy_topics]]
         dists = dists.div(dists.sum(axis=1), axis=0)
         coltrans = {c:keys[int(cc)] for c,cc in enumerate(dists.columns)}
 
@@ -59,5 +70,41 @@ def load(lda_path = '/home/rb/Documents/Data/models/lda/postwar-v3/',
         dz = dists.apply(zscore,axis=0)
         dists = dists.where(dz >= 0, 0.0000000000001)
         dists = dists.div(dists.sum(axis=1), axis=0)
-    
+
     return (dists, dat, coltrans, keys) if zscore_filter == False else (dists, dat, coltrans, keys, dz)
+
+
+
+def load_diag(xml_path):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+
+    topic_data = []
+    for topic in root.findall('topic'):
+        topic_id = int(topic.attrib['id'])
+        coherence = float(topic.attrib.get('coherence', 0))
+        exclusivity = float(topic.attrib.get('exclusivity', 0))
+        document_entropy = float(topic.attrib.get('document_entropy', 0))
+        word_length = float(topic.attrib.get('word-length', 0))
+        eff_num_words = float(topic.attrib.get('eff_num_words', 0))
+        tokens = float(topic.attrib.get('tokens', 0))
+        allocation_ratio = float(topic.attrib.get('allocation_ratio', 0))
+        uniform_dist = float(topic.attrib.get('uniform_dist', 0))
+        corpus_dist = float(topic.attrib.get('corpus_dist', 0))
+        words = [word.text for word in topic.findall('word')]
+
+        topic_data.append({
+            'topic_id': topic_id,
+            'words':' '.join(words),
+            'coherence': coherence,
+            'exclusivity': exclusivity,
+            'document_entropy': document_entropy,
+            'word_length': word_length,
+            'effective_num_words': eff_num_words,
+            'tokens': tokens,
+            'allocation_ratio': allocation_ratio,
+            'uniform_dist': uniform_dist,
+            'corpus_dist': corpus_dist
+        })
+
+    return pd.DataFrame(topic_data)
